@@ -31,7 +31,7 @@ By default, the script generates a protocol with the following parameters (which
 To run this script, you will need:
 1. **MATLAB** (R2019a or newer recommended)
 2. **Pulseq MATLAB Toolbox (v1.5.1):** You must have the official [Pulseq repository](https://github.com/pulseq/pulseq) downloaded and added to your MATLAB path.
-3. On the scanner console, from the resolution tab, set GRAPPA as the acceleration method using R=2 and 32 acs lines (integrated). From the sequence>special tab, select data handling -> ICE_STD to get the online recon to work.
+3. **On the scanner console:** from the resolution tab, set GRAPPA as the acceleration method using R=2 and 32 acs lines (integrated). From the sequence>special tab, select data handling -> ICE_STD to get the online recon to work.
 
 ## 🏃 Getting Started
 
