@@ -8,6 +8,7 @@ This sequence is optimized for phase imaging, Quantitative Susceptibility Mappin
 
 * **Multi-Echo Acquisition:** Acquires 5 echoes per TR using a unipolar flyback readout gradient design.
 * **GRAPPA Acceleration:** Implements 1D phase-encode (Y-axis) undersampling with integrated Auto-Calibration Signal (ACS) lines.
+* the sequence also allows for R=1 fully sampled acquisition, enabled by setting Ry = 1;
 * **Siemens mapVBVD Labels:** Injects inline Pulseq labels (`LIN`, `PAR`, `ECO`, `REF`, `IMA`, `NOISE`) directly into the ADC blocks. This allows seamless data sorting and standard pipeline reconstruction using tools like `mapVBVD`.
 * **Spoiling & Steady State:** * Continuous quadratic RF phase spoiling globally across all TRs (using an 84° increment for optimal steady-state stabilization).
   * Z-axis gradient phase-encode blips are perfectly rewound and combined with the spoiler (`gzRewindAndSpoil`) to maintain a constant net gradient moment per TR.
@@ -33,6 +34,8 @@ To run this script, you will need:
 1. **MATLAB** (R2019a or newer recommended)
 2. **Pulseq MATLAB Toolbox (v1.5.1):** You must have the official [Pulseq repository](https://github.com/pulseq/pulseq) downloaded and added to your MATLAB path.
 3. **On the scanner console:** from the resolution tab, set GRAPPA as the acceleration method using R=2 and 32 acs lines (integrated). From the sequence>special tab, select data handling -> ICE_STD to get the online recon to work.
+4. **if fully sampled acquisition is desired** set acceleration to "None", still using ICE_STD for data handling.
+5. **set Orientation to "Transversal" and phase encoding dir. to "R>>L". The slab position can also rotated/translated.
 
 ## 🏃 Getting Started
 
