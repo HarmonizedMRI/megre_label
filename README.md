@@ -8,7 +8,7 @@ This sequence is optimized for phase imaging, Quantitative Susceptibility Mappin
 
 * **Multi-Echo Acquisition:** Acquires 5 echoes per TR using a unipolar flyback readout gradient design.
 * **GRAPPA Acceleration:** Implements 1D phase-encode (Y-axis) undersampling with integrated Auto-Calibration Signal (ACS) lines.
-* the sequence also allows for R=1 fully sampled acquisition, enabled by setting Ry = 1;
+* The sequence also allows for R=1 fully sampled acquisition, enabled by setting Ry = 1;
 * **Siemens mapVBVD Labels:** Injects inline Pulseq labels (`LIN`, `PAR`, `ECO`, `REF`, `IMA`, `NOISE`) directly into the ADC blocks. This allows seamless data sorting and standard pipeline reconstruction using tools like `mapVBVD`.
 * **Spoiling & Steady State:** * Continuous quadratic RF phase spoiling globally across all TRs (using an 84° increment for optimal steady-state stabilization).
   * Z-axis gradient phase-encode blips are perfectly rewound and combined with the spoiler (`gzRewindAndSpoil`) to maintain a constant net gradient moment per TR.
