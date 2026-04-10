@@ -12,9 +12,10 @@ addpath pulseq-1.5.1/matlab/
 % Define FOV and resolution
 fov = [264e-3 184e-3 144e-3];    
 
+% use fully-sampled acquisition at 1x2x2 mm resolution
 Nx = 264;
-Ny = 184/1; 
-Nz = 144/1;            
+Ny = 184/2; 
+Nz = 144/2;            
 
 adc_dwell = 15e-6;
 
@@ -83,15 +84,16 @@ delta_TE = TE(2) - TE(1);    % for delay calculation
 num_TE = length(TE);
 TR = 35e-3;
 
-Ry = 2;
-num_acs = 32;
+% use fully sampled acquisition
+% Ry = 2;
+% num_acs = 32;
 
-ky_indices_acs = 1+Ny/2-num_acs/2:Ny/2+num_acs/2;   % acs indices
-ky_indices_accl = 1:Ry:Ny;
+% ky_indices_acs = 1+Ny/2-num_acs/2:Ny/2+num_acs/2;   % acs indices
+% ky_indices_accl = 1:Ry:Ny;
  
 % all of the sampled ky lines:
-ky_indices = union(ky_indices_acs, ky_indices_accl);
-
+%ky_indices = union(ky_indices_acs, ky_indices_accl);
+ky_indices = 1:Ny;
 
 % assume that gxPre, gyPre, gzPre can be played within Tpre simultaneously
 delayTE1 = ceil((TE(1) - mr.calcDuration(gz) + mr.calcRfCenter(rf) + rf.delay - mr.calcDuration(gxPre)  ...
@@ -124,8 +126,8 @@ dTR = mr.makeDelay(delayTR);
 %% PE Lines logic for online recon
 % -------------------------------------------------------------------------
 
-accelFactorPE = Ry;
-ACSnum = num_acs;
+accelFactorPE = 1;
+% ACSnum = num_acs;
 centerLineIdx = floor(Ny/2) + 1 ; % index of the center k-space line, starting from 1.
 
 count = 1 ;
@@ -138,11 +140,12 @@ for i = 1:Ny
     end
 end
 
-minPATRefLineIdx = centerLineIdx - ACSnum/2 ; % mininum PAT line starting from 1
-maxPATRefLineIdx = centerLineIdx + floor(ACSnum-1)/2 ; % maximum PAT line starting from 1
-PEsamp_ACS = minPATRefLineIdx : maxPATRefLineIdx ; % GRAPPA autocalibration lines
+% minPATRefLineIdx = centerLineIdx - ACSnum/2 ; % mininum PAT line starting from 1
+% maxPATRefLineIdx = centerLineIdx + floor(ACSnum-1)/2 ; % maximum PAT line starting from 1
+% PEsamp_ACS = minPATRefLineIdx : maxPATRefLineIdx ; % GRAPPA autocalibration lines
 
-PEsamp = union(PEsamp_u, PEsamp_ACS) ; % actually sampled lines
+% PEsamp = union(PEsamp_u, PEsamp_ACS) ; % actually sampled lines
+PEsamp = PEsamp_u;
 nPEsamp = length(PEsamp) ; % number of actually sampled
 PEsamp_INC = diff([PEsamp, PEsamp(end)]) ;
 
@@ -315,15 +318,15 @@ for iZ = 1:Nz
         seq.addBlock(dTE1);
 
 
-        if ismember(iY,PEsamp_ACS)
-            if ismember(iY,PEsamp_u)
-                seq.addBlock(lblSetRefAndImaScan, lblSetRefScan) ;
-            else
-                seq.addBlock(lblResetRefAndImaScan, lblSetRefScan) ;
-            end
-        else
-            seq.addBlock(lblResetRefAndImaScan, lblResetRefScan) ;
-        end
+%        if ismember(iY,PEsamp_ACS)
+%            if ismember(iY,PEsamp_u)
+%                seq.addBlock(lblSetRefAndImaScan, lblSetRefScan) ;
+%            else
+%                seq.addBlock(lblResetRefAndImaScan, lblSetRefScan) ;
+%            end
+%        else
+        seq.addBlock(lblResetRefAndImaScan, lblResetRefScan) ;
+%        end
 
 
         % seq.addBlock(gx,adc);
@@ -390,7 +393,7 @@ if ~isfolder([file_path, dateString])
 end
 
 % Create the full filename
-fileName = [file_path, dateString, '/gre3d_test_label_spoil_v2_xyzflip'];
+fileName = [file_path, dateString, '/gre3d_test_label_spoil_v2_xyzflip_R1'];
 
 
 % Save the sequence
