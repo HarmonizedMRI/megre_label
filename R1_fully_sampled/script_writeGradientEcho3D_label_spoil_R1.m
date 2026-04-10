@@ -85,7 +85,7 @@ num_TE = length(TE);
 TR = 35e-3;
 
 % use fully sampled acquisition
-% Ry = 2;
+Ry = 1;
 % num_acs = 32;
 
 % ky_indices_acs = 1+Ny/2-num_acs/2:Ny/2+num_acs/2;   % acs indices
