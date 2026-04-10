@@ -1,6 +1,6 @@
 # 3D Multi-Echo Gradient Echo (ME-GRE) Pulseq Sequence
 
-This repository contains a MATLAB script (`script_writeGradientEcho3D_label_spoil_v1.m`) used to generate a 3D Multi-Echo Gradient Echo (ME-GRE) MRI sequence using the open-source **Pulseq** framework. 
+This repository contains a MATLAB script (`script_writeGradientEcho3D_label_spoil_github.m`) used to generate a 3D Multi-Echo Gradient Echo (ME-GRE) MRI sequence using the open-source **Pulseq** framework. 
 
 This sequence is optimized for phase imaging, Quantitative Susceptibility Mapping (QSM), and parallel imaging reconstruction, featuring steady-state gradient/RF spoiling and built-in mapVBVD labels for GRAPPA reconstruction.
 
@@ -12,6 +12,7 @@ This sequence is optimized for phase imaging, Quantitative Susceptibility Mappin
 * **Spoiling & Steady State:** * Continuous quadratic RF phase spoiling globally across all TRs (using an 84° increment for optimal steady-state stabilization).
   * Z-axis gradient phase-encode blips are perfectly rewound and combined with the spoiler (`gzRewindAndSpoil`) to maintain a constant net gradient moment per TR.
 * **Dummy Scans:** Plays out 50 dummy TRs prior to acquisition with fully matched gradient structures to gracefully drive the magnetization into the steady state.
+* Gx, Gy, and Gz gradients are flipped so that the online reconstructed image matches those reconstructed using the native Siemens GRE sequence.
 
 ## ⚙️ Sequence Parameters
 
