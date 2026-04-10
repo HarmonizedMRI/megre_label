@@ -37,7 +37,7 @@ To run this script, you will need:
 ## 🏃 Getting Started
 
 1. Clone this repository to your local machine.
-2. Open `script_writeGradientEcho3D_label_spoil_v1.m` in MATLAB.
+2. Open `script_writeGradientEcho3D_label_spoil_github.m` in MATLAB.
 3. Update the Pulseq directory path at the top of the script to point to your local installation:
    ```matlab
    addpath('path/to/your/pulseq-1.5.1/matlab/')
