@@ -383,7 +383,7 @@ seq.setDefinition('PhaseResolution', phaseResolution) ;
 % Generate a date string in the format YYYYMMDD (e.g., 20260324)
 dateString = char(datetime('today', 'Format', 'yyyyMMdd'));
 
-file_path = pwd;  % use current folder
+file_path = [pwd, '/'];  % use current folder
 
 if ~isfolder([file_path, dateString])
     mkdir([file_path, dateString])
