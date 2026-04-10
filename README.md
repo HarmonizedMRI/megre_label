@@ -34,8 +34,8 @@ To run this script, you will need:
 1. **MATLAB** (R2019a or newer recommended)
 2. **Pulseq MATLAB Toolbox (v1.5.1):** You must have the official [Pulseq repository](https://github.com/pulseq/pulseq) downloaded and added to your MATLAB path.
 3. **On the scanner console:** from the resolution tab, set GRAPPA as the acceleration method using R=2 and 32 acs lines (integrated). From the sequence>special tab, select data handling -> ICE_STD to get the online recon to work.
-4. **if fully sampled acquisition is desired** set acceleration to "None", still using ICE_STD for data handling.
-5. **set Orientation to "Transversal" and phase encoding dir. to "R>>L". The slab position can also rotated/translated.
+4. Set Orientation to "Transversal" and phase encoding dir. to "R>>L". The slab position can also rotated/translated.
+5. **if fully sampled acquisition is desired** set acceleration to "None", still using ICE_STD for data handling.
 
 ## 🏃 Getting Started
 
