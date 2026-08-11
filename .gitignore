@@ -4,7 +4,7 @@
 *.nii.gz
 *.mat
 reconstruction/output/
-reconstruction/external/
+reconstruction/external/mapVBVD2/
 
 # MATLAB-generated files
 *.asv

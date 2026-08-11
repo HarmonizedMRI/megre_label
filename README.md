@@ -39,7 +39,8 @@ To run this script, you will need:
 
 ## 🏃 Getting Started
 
-1. Clone this repository to your local machine.
+1. Clone this repository and its submodules using
+   `git clone --recurse-submodules`.
 2. Open `script_writeGradientEcho3D_label_spoil_github.m` in MATLAB.
 3. Update the Pulseq directory path at the top of the script to point to your local installation:
    ```matlab
@@ -49,8 +50,9 @@ To run this script, you will need:
 ## Raw-data reconstruction
 
 The [`reconstruction`](reconstruction/) package reconstructs the labeled
-Siemens raw data produced by this sequence. It uses mapVBVD, GRAPPA, ESPIRiT,
-centered-FFT, and coil-compression MATLAB utilities installed separately.
+Siemens raw data produced by this sequence. It includes the first-party
+GRAPPA, ESPIRiT, centered-FFT, and coil-compression utilities and links
+mapVBVD as a Git submodule.
 
 The pipeline:
 

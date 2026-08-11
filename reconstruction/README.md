@@ -14,16 +14,19 @@ multi-echo volumes.
 - Enough memory for the raw, compressed, RSS, and complex volumes.
 - A Siemens raw file containing both `image` and `refscan` acquisitions.
 
-Install the following non-MathWorks dependencies separately and add them to
-the MATLAB path before running the reconstruction:
+Clone this repository with submodules so that the upstream
+[mapVBVD](https://github.com/pehses/mapVBVD) dependency is available:
 
-- [mapVBVD](https://github.com/pehses/mapVBVD), exposing `mapVBVD`.
-- The ESPIRiT calibration, centered-FFT, coil-compression, and 2-D GRAPPA
-  utilities used by your reconstruction environment. The required function
-  names are checked at startup and reported together if any are missing.
+```bash
+git clone --recurse-submodules https://github.com/HarmonizedMRI/megre_label.git
+```
 
-These dependencies are not redistributed here because the local source copies
-did not include sufficient licensing information for public redistribution.
+If the repository was cloned without submodules, run
+`git submodule update --init --recursive`. The first-party ESPIRiT,
+centered-FFT, coil-compression, and 2-D GRAPPA utilities are included under
+`external/recon_utils` and distributed under the repository's MIT license.
+The reconstruction function adds both dependency directories to the MATLAB
+path automatically.
 
 ## Quick start
 
@@ -75,5 +78,7 @@ count, preventing a dimension mismatch when compression reduces the number
 of channels. Hard-coded data paths, slice selection, figures, and scanner
 matrix size were removed; dimensions are inferred from the raw data.
 
-Full end-to-end reconstruction requires a compatible, de-identified Siemens
-raw-data file and is not exercised by the repository's dependency smoke test.
+`mapVBVD` remains an independently maintained upstream project and is linked
+as a Git submodule rather than relicensed by this repository. Full end-to-end
+reconstruction requires a compatible, de-identified Siemens raw-data file and
+is not exercised by the repository's dependency smoke test.
