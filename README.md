@@ -44,3 +44,28 @@ To run this script, you will need:
 3. Update the Pulseq directory path at the top of the script to point to your local installation:
    ```matlab
    addpath('path/to/your/pulseq-1.5.1/matlab/')
+   ```
+
+## Raw-data reconstruction
+
+The [`reconstruction`](reconstruction/) package reconstructs the labeled
+Siemens raw data produced by this sequence. It uses mapVBVD, GRAPPA, ESPIRiT,
+centered-FFT, and coil-compression MATLAB utilities installed separately.
+
+The pipeline:
+
+1. Reads the `.dat` image and reference acquisitions with mapVBVD.
+2. Inserts the integrated ACS lines and compresses the receive coils.
+3. Performs slice-parallel 2-D GRAPPA reconstruction.
+4. Estimates ESPIRiT receive maps and produces complex multi-echo images.
+5. Writes separate 4-D magnitude and phase NIfTI files.
+
+To run it, edit the raw-data path in
+[`reconstruction/example_reconstruct.m`](reconstruction/example_reconstruct.m),
+then execute that script in MATLAB. The default reconstruction settings match
+the sequence defaults: `Ry=2`, `Rz=1`, 32 ACS lines, and 32 virtual coils.
+See the [reconstruction README](reconstruction/README.md) for configuration,
+requirements, outputs, and assumptions.
+
+Generated raw data and reconstruction outputs are intentionally excluded from
+version control.

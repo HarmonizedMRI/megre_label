@@ -1,0 +1,12 @@
+# MRI raw data and generated reconstruction outputs
+*.dat
+*.nii
+*.nii.gz
+*.mat
+reconstruction/output/
+reconstruction/external/
+
+# MATLAB-generated files
+*.asv
+*.m~
+slprj/
