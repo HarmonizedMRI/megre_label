@@ -1,0 +1,3 @@
+[submodule "reconstruction/external/mapVBVD"]
+	path = reconstruction/external/mapVBVD
+	url = https://github.com/pehses/mapVBVD.git
