@@ -6,7 +6,10 @@ clear
 restoredefaultpath
 
 % here add pulseq matlab directory to path e.g.
-addpath pulseq-1.5.1/matlab/
+addpath pulseq-version-newer-than-20260519/matlab/
+addpath path/to/pulceq/v2.5.2.0/matlab % only needed for GE scanner
+
+
 
 
 % Define FOV and resolution
@@ -16,11 +19,13 @@ Nx = 264;
 Ny = 184/1; 
 Nz = 144/1;            
 
-adc_dwell = 15e-6;
+adc_dwell = 14e-6;
 
-Tread = adc_dwell * Nx;
+Tread_adc = adc_dwell * Nx;
+Tread = ceil(Tread_adc / 20e-6) * 20e-6;
 
 disp(['Tread ', num2str(Tread*1e3), ' ms'])
+disp(['ADC duration ', num2str(Tread_adc*1e3), ' ms'])
 
 Ndummy = 50;
 
@@ -30,9 +35,13 @@ Smax = 100;
 
 sys = mr.opts('MaxGrad', Gmax, 'GradUnit', 'mT/m', ...
     'MaxSlew', Smax, 'SlewUnit', 'T/m/s', 'rfRingdownTime', 20e-6, ...
-    'rfDeadTime', 100e-6, 'adcDeadTime', 10e-6);
+    'rfDeadTime', 100e-6, 'adcDeadTime', 10e-6, ...
+    'adcRasterTime', 2e-6, 'rfRasterTime', 2e-6, ...
+    'gradRasterTime', 20e-6, 'blockDurationRaster', 20e-6);
 
 seq = mr.Sequence(sys);           % Create a new sequence object
+
+assert(ismethod(seq, 'addTRID'), 'seq must have an addTRID method. Please download a new version of matlab pulseq toolbox');
 
 alpha = 15;     % flip angle
 rf_duration = 1.e-3;
@@ -61,7 +70,7 @@ gx = mr.makeTrapezoid('x',sys,'FlatArea',Nx*deltak(1),'FlatTime',Tread);
 % sys has to be provided otherwise adc does not have dead time by default,
 % which causes an error during noise adc -> other adc events are saved by
 % the gx ramp up/down times
-adc = mr.makeAdc(Nx,sys,'Duration',gx.flatTime,'Delay',gx.riseTime);
+adc = mr.makeAdc(Nx,sys,'Duration',Tread_adc,'Delay',gx.riseTime);
 
 gxPre = mr.makeTrapezoid('x',sys,'Area',-gx.area/2,'Duration',Tpre);
 
@@ -166,23 +175,17 @@ PEsamp_INC = diff([PEsamp, PEsamp(end)]) ;
 % -------------------------------------------------------------------------
 
 
-% Make trapezoids for inner loop to save computation
-clear gyPre gyReph;
-
-for iY = ky_indices
-    gyPre(iY) = mr.makeTrapezoid('y','Area',areaY(iY),'Duration',Tpre);
-    gyReph(iY) = mr.makeTrapezoid('y','Area',-areaY(iY),'Duration',Tpre);
-end
+% GE conversion expects repeated waveform shapes. Define one base PE
+% trapezoid and scale it inside the scan loop.
+gyPreBase = mr.makeTrapezoid('y', sys, 'Area', max(abs(areaY(ky_indices))), 'Duration', Tpre);
+gyRephBase = mr.makeTrapezoid('y', sys, 'Area', max(abs(areaY(ky_indices))), 'Duration', Tpre);
+gyPreScales = areaY / gyPreBase.area;
+gyRephScales = -areaY / gyRephBase.area;
 
 
 
 
 [~, rf.shapeIDs] = seq.registerRfEvent(rf); % the phase of the RF object will change, therefore we only per-register the shapes 
-
-for iY = ky_indices
-    gyPre(iY).id = seq.registerGradEvent(gyPre(iY));
-    gyReph(iY).id = seq.registerGradEvent(gyReph(iY));
-end
 
 % Create a Z-gradient that ONLY does the RF rephasing for the dummy loop
 gzReph_dummy = mr.makeTrapezoid('z', sys, 'Area', gz_rf_reph.area, 'Duration', Tpre);
@@ -232,6 +235,9 @@ rfSpoilingInc = 84;
 rf_phase = 0;
 rf_inc = 0;
 
+pislquant_adc_count = 0;
+siemensOnlineReconOff = mr.makeLabel('SET', 'OFF', true);
+siemensOnlineRecon = mr.makeLabel('SET', 'OFF', false);
 
 % Drive magnetization to the steady state
 for iY = 1:Ndummy
@@ -244,22 +250,31 @@ for iY = 1:Ndummy
     rf_inc = mod(rf_inc + rfSpoilingInc, 360.0);
     rf_phase = mod(rf_phase + rf_inc, 360.0);
     
+    seq.addTRID('receive_gain_calib');
     seq.addBlock(rf,gz);
 
     % Gradients
-    seq.addBlock(gxPre,gyPre(centerLineIdx),gzReph_dummy);
+    centerScalePre = gyPreScales(centerLineIdx);
+    centerScalePre = centerScalePre + (centerScalePre == 0) * eps;
+    centerScaleReph = gyRephScales(centerLineIdx);
+    centerScaleReph = centerScaleReph + (centerScaleReph == 0) * eps;
+
+    seq.addBlock(gxPre,mr.scaleGrad(gyPreBase, centerScalePre),gzReph_dummy);
     seq.addBlock(dTE1);
-    seq.addBlock(gx);
+    seq.addBlock(gx, adc, siemensOnlineReconOff);
+    pislquant_adc_count = pislquant_adc_count + 1;
     
     for t = 2:num_TE
         seq.addBlock(gxFlyback);
         seq.addBlock(dTEn);
-        seq.addBlock(gx);
+        seq.addBlock(gx, adc);
+        pislquant_adc_count = pislquant_adc_count + 1;
     end
 
-    seq.addBlock(gyReph(centerLineIdx),gxSpoil,gzSpoil);
+    seq.addBlock(mr.scaleGrad(gyRephBase, centerScaleReph),gxSpoil,gzSpoil);
     seq.addBlock(dTR);
 end
+
 
 % define labels
 lblSetRefScan = mr.makeLabel('SET','REF', true) ;
@@ -274,8 +289,11 @@ lblResetRefScan.id=seq.registerLabelEvent(lblResetRefScan);
 lblResetRefAndImaScan.id=seq.registerLabelEvent(lblResetRefAndImaScan);
 
 % Add noise scans.
+adc_dur_round_up = ceil(mr.calcDuration(adc)/seq.blockDurationRaster)*seq.blockDurationRaster;
+seq.addTRID('noise_scan');
 seq.addBlock(mr.makeLabel('SET', 'LIN', 0),mr.makeLabel('SET','PAR', 0)) ;
-seq.addBlock(adc, mr.makeLabel('SET', 'NOISE', true),lblResetRefScan,lblResetRefAndImaScan) ;
+% seq.addBlock(adc, mr.makeLabel('SET', 'NOISE', true),lblResetRefScan,lblResetRefAndImaScan) ;
+seq.addBlock(adc_dur_round_up,siemensOnlineRecon,adc, mr.makeLabel('SET', 'NOISE', true),lblResetRefScan,lblResetRefAndImaScan) ;
 seq.addBlock(mr.makeLabel('SET', 'NOISE', false)) ;
 
 
@@ -295,25 +313,20 @@ end
 
 cnt_adc = 0;
 
+gzPreAreas = -areaZ + gz_rf_reph.area;
+gzRewindAndSpoilAreas = areaZ + gzSpoil.area;
+gzPreBase = mr.makeTrapezoid('z', sys, 'Area', max(abs(gzPreAreas)), 'Duration', Tpre);
+gzRewindAndSpoilBase = mr.makeTrapezoid('z', sys, 'Area', max(abs(gzRewindAndSpoilAreas)), 'Duration', Tspoil);
+
 % Loop over phase encodes and define sequence blocks
 tic
 for iZ = 1:Nz
     disp(['iZ: ', num2str(iZ)])
 
-    % gzPre is already negated, do not use scaleGrad
-    gzPre = mr.makeTrapezoid('z','Area', -areaZ(iZ) + gz_rf_reph.area, 'Duration', Tpre);  % combine gz phase encode blip and rf rephaser
-
-    % NEW: Combine the Z rewinder (areaZ(iZ)) and Z spoiler (spoil_cycles * Nz * deltak(3))
-    gzRewindAndSpoil = mr.makeTrapezoid('z', sys, 'Area', areaZ(iZ) + gzSpoil.area, 'Duration', Tspoil);
-
-    % optional pre-registration for acceleration
-    gzPre.id = seq.registerGradEvent(gzPre);
-
-    % flip axis -> should not be needed
-    % gzRewindAndSpoil = mr.scaleGrad(gzRewindAndSpoil, -1);
-    % pre-registration after scaling
-    gzRewindAndSpoil.id = seq.registerGradEvent(gzRewindAndSpoil);
-
+    gzPreScale = gzPreAreas(iZ) / gzPreBase.area;
+    gzPreScale = gzPreScale + (gzPreScale == 0) * eps;
+    gzRewindAndSpoilScale = gzRewindAndSpoilAreas(iZ) / gzRewindAndSpoilBase.area;
+    gzRewindAndSpoilScale = gzRewindAndSpoilScale + (gzRewindAndSpoilScale == 0) * eps;
 
     lbl_par = mr.makeLabel('SET', 'PAR', iZ - 1);
 
@@ -328,10 +341,16 @@ for iZ = 1:Nz
         rf_phase = mod(rf_phase + rf_inc, 360.0);
 
         % Excitation
+        seq.addTRID('imaging');
         seq.addBlock(rf,gz);
         
         % Encoding
-        seq.addBlock(gxPre,gyPre(iY),gzPre);
+        gyPreScale = gyPreScales(iY);
+        gyPreScale = gyPreScale + (gyPreScale == 0) * eps;
+        gyRephScale = gyRephScales(iY);
+        gyRephScale = gyRephScale + (gyRephScale == 0) * eps;
+
+        seq.addBlock(gxPre,mr.scaleGrad(gyPreBase, gyPreScale),mr.scaleGrad(gzPreBase, gzPreScale));
         seq.addBlock(dTE1);
 
 
@@ -365,13 +384,19 @@ for iZ = 1:Nz
             cnt_adc = cnt_adc+1;
         end
 
-        seq.addBlock(gyReph(iY),gzRewindAndSpoil,gxSpoil);  % gxSpoil duration dominates
+        seq.addBlock(mr.scaleGrad(gyRephBase, gyRephScale),mr.scaleGrad(gzRewindAndSpoilBase, gzRewindAndSpoilScale),gxSpoil);  % gxSpoil duration dominates
         seq.addBlock(dTR)
     end
 end
 toc
 
 disp(['num adc:', num2str(cnt_adc)])
+
+% Add noise scans after pislquant and imaging ADCs.
+seq.addTRID('noise');
+seq.addBlock(mr.makeLabel('SET', 'LIN', 0),mr.makeLabel('SET','PAR', 0)) ;
+seq.addBlock(adc, mr.makeDelay(3.8e-3), mr.makeLabel('SET', 'NOISE', true),lblResetRefScan,lblResetRefAndImaScan) ;
+seq.addBlock(mr.makeLabel('SET', 'NOISE', false)) ;
 
 fprintf('Sequence ready\n');
 
@@ -398,9 +423,13 @@ seq.setDefinition('FOV', fov);
 seq.setDefinition('Name', 'gre3d');
 seq.setDefinition('AccelerationFactor', Ry);
 seq.setDefinition('AccelerationFactorPE', Ry);
+seq.setDefinition('num_adcs_pislquant', pislquant_adc_count);
+seq.setDefinition('pislquant', pislquant_adc_count);
 
 seq.setDefinition('kSpaceCenterLine', centerLineIdx-1) ;
 seq.setDefinition('PhaseResolution', phaseResolution) ;
+
+seq.setDefinition('TridIdName', strjoin(seq.tridId2Name, ',')); % for seqeyes
 
 
 
@@ -423,7 +452,7 @@ if use_v141
 else
     seq.write([fileName, '.seq']);
 end
-
+writeceq(seq2ceq(seq), [fileName, '.pge'], 'pislquant', seq.getDefinition('pislquant')); % for GE scanner
 
 % -------------------------------------------------------------------------
 %%  sequence duration
@@ -443,5 +472,3 @@ disp('Sequence successfully generated!');
 fprintf('Total Scan Time: %d min %.1f sec\n', minutes, seconds);
 fprintf('Total Dummies: %d\n', Ndummy);
 disp('-----------------------------------------');
-
-

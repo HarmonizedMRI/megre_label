@@ -32,10 +32,11 @@ By default, the script generates a protocol with the following parameters (which
 
 To run this script, you will need:
 1. **MATLAB** (R2019a or newer recommended)
-2. **Pulseq MATLAB Toolbox (v1.5.1):** You must have the official [Pulseq repository](https://github.com/pulseq/pulseq) downloaded and added to your MATLAB path.
-3. **On the scanner console:** from the resolution tab, set GRAPPA as the acceleration method using R=2 and 32 acs lines (integrated). From the sequence>special tab, select data handling -> ICE_STD to get the online recon to work.
-4. Set Orientation to "Transversal" and phase encoding dir. to "R>>L". The slab position can also rotated/translated.
-5. **if fully sampled acquisition is desired** set acceleration to "None", still using ICE_STD for data handling.
+2. **Pulseq MATLAB Toolbox (version newer than 2026-05-19):** You must have the official [Pulseq repository](https://github.com/pulseq/pulseq) downloaded and added to your MATLAB path.
+3. (This is only needed when running the sequence on a GE scanner) Download and add pulceq toolbox to matlab path [PulCeq v2.5.2.0](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.0).
+4. **On the scanner console:** from the resolution tab, set GRAPPA as the acceleration method using R=2 and 32 acs lines (integrated). From the sequence>special tab, select data handling -> ICE_STD to get the online recon to work.
+5. Set Orientation to "Transversal" and phase encoding dir. to "R>>L". The slab position can also rotated/translated.
+6. **if fully sampled acquisition is desired** set acceleration to "None", still using ICE_STD for data handling.
 
 ## 🏃 Getting Started
 
@@ -44,10 +45,11 @@ To run this script, you will need:
 2. Open `script_writeGradientEcho3D_label_spoil_github.m` in MATLAB.
 3. Update the Pulseq directory path at the top of the script to point to your local installation:
    ```matlab
-   addpath('path/to/your/pulseq-1.5.1/matlab/')
+   addpath('pulseq-version-newer-than-20260519/matlab/')
+   addpath('path/to/pulceq/v2.5.2.0/matlab') % only needed for GE scanner
    ```
 
-## Raw-data reconstruction
+## Raw-data reconstruction for Siemens scanners
 
 The [`reconstruction`](reconstruction/) package reconstructs the labeled
 Siemens raw data produced by this sequence. It includes the first-party
@@ -71,3 +73,5 @@ requirements, outputs, and assumptions.
 
 Generated raw data and reconstruction outputs are intentionally excluded from
 version control.
+
+## Raw-data reconstruction for GE scanners
