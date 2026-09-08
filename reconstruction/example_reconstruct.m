@@ -3,7 +3,7 @@ toolboxRoot = fileparts(mfilename('fullpath'));
 addpath(toolboxRoot);
 
 dataPath = '/path/to/raw/data';
-filename = 'meas_MID00000_FID00000_megre_label';
+filename = 'meas_MID00048_FID27124_pulseq151fix_gre3d_label_spoil_xyzflip_2';
 rawFile = fullfile(dataPath, [filename '.dat']);
 opts = struct;
 opts.acceleration = [2 1];

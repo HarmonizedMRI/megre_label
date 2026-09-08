@@ -28,9 +28,24 @@ centered-FFT, coil-compression, and 2-D GRAPPA utilities are included under
 The reconstruction function adds both dependency directories to the MATLAB
 path automatically.
 
+## Example Siemens raw data
+
+The Siemens raw data are available in this
+[Dropbox folder](https://www.dropbox.com/scl/fo/xk1q7wmbca5mirlaau4ab/AHAkgtLHZW7qOyfU7SVh5DQ?rlkey=xqrpv1w7cgtbqjxd0rvlb9pp0&st=qt6xvqr9&dl=0).
+Download the following file for reconstruction:
+
+```text
+meas_MID00048_FID27124_pulseq151fix_gre3d_label_spoil_xyzflip_2.dat
+```
+
+`example_reconstruct.m` is configured to use this filename. Set `dataPath`
+in that script to the local folder containing the downloaded file.
+
 ## Quick start
 
-Edit `rawFile` in `example_reconstruct.m`, then run the script. Alternatively:
+Set `dataPath` in `example_reconstruct.m`, then run the script. To reconstruct
+a different file, also update `filename` without the `.dat` extension.
+Alternatively:
 
 ```matlab
 addpath('/path/to/qsm_grappa_recon_toolbox')
